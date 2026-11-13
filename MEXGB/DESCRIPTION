@@ -1,25 +1,26 @@
 Package: MEXGB
 Type: Package
 Title: Mixed-Effect Extreme Gradient Boosting for Longitudinal Data
-Version: 0.5.0
-Authors@R: c(person("Ajibade Kunle", "Saheed", role = "aut"),
-             person("Oyebayo Ridwan", "Olaniran", role = c("aut", "cre"),
-                    email = "olaniran.or@kwasu.edu.ng"),
-             person("Mohd Asrul Affendi", "Abdullah", role = "aut"))
-Maintainer: Oyebayo Ridwan Olaniran <olaniran.or@kwasu.edu.ng>
-Description: Extreme gradient boosting (XGBoost) is a regularised, second-order (Newton)
-    tree-boosting method, but like other tree ensembles it treats clustered observations as
-    independent. This package implements Mixed-Effect Extreme Gradient Boosting ('MEXGB'),
-    which embeds subject-specific random effects within the 'xgboost' tree-boosting framework
-    for high-dimensional longitudinal and clustered data with continuous (Gaussian), binary
-    (Bernoulli) or right-censored time-to-event (frailty Cox) outcomes. The fixed effect is fitted by 'xgboost' and the random effects and variance
-    components by an Expectation-Maximization / Best Linear Unbiased Prediction loop, extended to
-    binary and survival outcomes by penalised quasi-likelihood. The implementation mirrors the 'MEGB' package,
-    replacing first-order gradient boosting ('gbm') by extreme gradient boosting ('xgboost').
+Version: 1.0.0
+Authors@R: c(person("Oyebayo Ridwan", "Olaniran", role = c("aut", "cre"),
+                    email = "rid4stat@yahoo.com",
+                    comment = c(ORCID = "0000-0001-7342-8639")),
+             person("Saheed Kunle", "Ajibade", role = "aut"),
+             person("Samuel Adewale", "Aderoju", role = "aut"))
+Description: Fits mixed-effects extreme gradient boosting models for Gaussian,
+    binary and clustered right-censored survival outcomes. Combines subject-specific
+    random effects with boosted trees and optional penalised linear terms using
+    'xgboost' and 'glmnet'. Provides within-subject cross-fitting, predictor screening,
+    approximate variance-component estimation, conditional prediction and simulation
+    utilities. Builds on extreme gradient boosting by Chen and Guestrin (2016)
+    <doi:10.1145/2939672.2939785> and mixed-effects gradient boosting by
+    Olaniran et al. (2025) <doi:10.1038/s41598-025-16526-z>.
 License: GPL-2
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
-Imports: stats, utils, xgboost, MASS, survival, glmnet
-Suggests: testthat (>= 3.0.0), survival
+Imports: stats, utils, xgboost (>= 1.7.0), MASS, survival, glmnet
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown
+VignetteBuilder: knitr
 Config/testthat/edition: 3
+NeedsCompilation: no
 RoxygenNote: 7.3.1
