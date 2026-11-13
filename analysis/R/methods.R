@@ -260,7 +260,7 @@ fit_mboost <- function(tr, te, family, cfg) {
 }
 
 ## ---------------------------------------------------------------------------
-## glmmLasso -- package glmmLasso (L1-penalised (G)LMM), random intercept
+## glmmLasso -- package glmmLasso (L1-penalised (G)LMM), random intercept + slope
 ## ---------------------------------------------------------------------------
 fit_glmmLasso <- function(tr, te, family, cfg) {
   st <- standardise(tr, te)
@@ -285,7 +285,7 @@ fit_glmmLasso <- function(tr, te, family, cfg) {
 }
 
 ## ---------------------------------------------------------------------------
-## LMM -- package nlme: lme, REML, random intercept
+## LMM -- package nlme: lme, REML, random intercept + slope
 ## ---------------------------------------------------------------------------
 fit_LMM <- function(tr, te, family, cfg) {
   stopifnot(family == "gaussian")
@@ -305,7 +305,7 @@ fit_LMM <- function(tr, te, family, cfg) {
 }
 
 ## ---------------------------------------------------------------------------
-## GLMM-PQL -- package MASS: glmmPQL, logit link, random intercept
+## GLMM-PQL -- package MASS: glmmPQL, logit link, random intercept + slope
 ## ---------------------------------------------------------------------------
 `fit_GLMM-PQL` <- function(tr, te, family, cfg) {
   stopifnot(family == "binomial")
