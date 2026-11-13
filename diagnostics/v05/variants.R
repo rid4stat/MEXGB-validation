@@ -1,0 +1,52 @@
+## MEXGB variants for the diagnostics (cfg$mexgb options of fit_MEXGB)
+mk_variant <- function(...) { o <- list(...); force(o)
+  function(tr, te, family, cfg) { cfg$mexgb <- o; fit_MEXGB(tr, te, family, cfg) } }
+FITTERS$MX_v04   <- mk_variant(linear = FALSE, ntree_select = "fixed", ntree_max = 500)
+FITTERS$MX_es    <- mk_variant(linear = FALSE, ntree_select = "cv", ntree_max = 1500)
+FITTERS$MX_lin   <- mk_variant(linear = TRUE,  ntree_select = "cv", ntree_max = 1500)
+FITTERS$MX_lin0  <- mk_variant(linear = TRUE,  ntree_select = "cv", ntree_max = 1500, lambda = 0)
+FITTERS$MX_linEN <- mk_variant(linear = TRUE,  ntree_select = "cv", ntree_max = 1500, lin_alpha = 0.5)
+method_applicable_orig <- method_applicable
+## GPBoost through the python package (the R package could not be compiled here)
+fit_GPBoost_py <- function(tr, te, family, cfg) {
+  lik <- if (family == "gaussian") "gaussian" else "bernoulli_logit"
+  f <- tempfile(); dir.create(f)
+  w <- function(nm, x) utils::write.table(x, file.path(f, nm), row.names = FALSE, col.names = FALSE, sep = ",")
+  w("X_tr.csv", tr$X); w("X_te.csv", te$X); w("y_tr.csv", tr$y)
+  w("id_tr.csv", as.integer(factor(tr$id, levels = unique(c(tr$id, te$id)))))
+  w("id_te.csv", as.integer(factor(te$id, levels = unique(c(tr$id, te$id)))))
+  w("t_tr.csv", tr$time); w("t_te.csv", te$time)
+  out <- file.path(f, "pred.csv")
+  st <- system2("python3", c("/home/claude/out/v05/MEXGB_paper1/diagnostics/v05/gpb_py_csv.py", f, lik,
+                             cfg$boost$ntree, "1", out), stdout = FALSE, stderr = FALSE)
+  if (st != 0 || !file.exists(out)) stop("gpboost failed")
+  list(pred = as.numeric(read.csv(out, header = FALSE)[, 1]), imp = NULL)
+}
+FITTERS$GPBoost <- fit_GPBoost_py
+FITTERS$MX5      <- mk_variant(linear = TRUE,  ntree_select = "cv", ntree_max = 5000)
+FITTERS$MX5_nolin <- mk_variant(linear = FALSE, ntree_select = "cv", ntree_max = 1500)
+FITTERS$MX5f     <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, lambda = 0)
+FITTERS$MX5g     <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MX5n     <- mk_variant(linear = FALSE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MX5a     <- mk_variant(linear = "auto", ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MX5n_s   <- mk_variant(linear = FALSE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, subsample = 0.7, colsample = 0.5)
+FITTERS$MX5_s    <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, subsample = 0.7, colsample = 0.5)
+FITTERS$MX6      <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MX6n     <- mk_variant(linear = FALSE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MX6s05   <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.05)
+FITTERS$MX6fix   <- mk_variant(linear = TRUE, ntree_select = "fixed", ntree_max = 500, shrinkage = 0.05)
+FITTERS$MX7      <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+mk_variant2 <- function(em = list(), ...) { o <- list(...); force(o); force(em)
+  function(tr, te, family, cfg) { cfg$mexgb <- o; for (nm in names(em)) cfg$em[[nm]] <- em[[nm]]; fit_MEXGB(tr, te, family, cfg) } }
+FITTERS$MX8     <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MX8z    <- mk_variant2(em = list(init = "zero"), linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+## v0.5 final candidates: honest out-of-fold offset + honest D scaling (gaussian), linear auto
+FITTERS$MX9     <- mk_variant2(em = list(init = "zero"), linear = "auto", ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MX9l    <- mk_variant2(em = list(init = "lmm"),  linear = "auto", ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MXa <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, honest = TRUE, honest_d = FALSE)
+FITTERS$MXb <- mk_variant(linear = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, honest = TRUE, honest_d = TRUE)
+FITTERS$MXc <- mk_variant(linear = "auto", ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, honest = TRUE, honest_d = FALSE)
+FITTERS$MXnh  <- mk_variant(linear = "auto", ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, honest = FALSE)
+FITTERS$MXnhl <- mk_variant(linear = TRUE, init = "lmm", ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1, honest = FALSE)
+FITTERS$MXr <- mk_variant(linear = "auto", lin_relax = TRUE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
+FITTERS$MXo <- mk_variant(linear = "auto", lin_relax = TRUE, honest_offset = FALSE, ntree_select = "cv", ntree_max = 5000, shrinkage = 0.1)
