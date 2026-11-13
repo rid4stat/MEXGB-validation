@@ -59,7 +59,7 @@ From a terminal: `Rscript run_all.R` (Linux/macOS smoke: `MEXGB_SMOKE=1 Rscript 
 Every scenario is cached in `results/raw/*.rds`; an interrupted run resumes where it stopped.
 Workers: `CFG$N_CORES` (default = cores − 1).
 
-## Design (as in paper/thesis and the published MEGB paper)
+## Design
 * n = 50 subjects × 20 occasions (v0.4; was 20 × 10), t rescaled to [0,1]; x ~ N_p(0, Σ_W), (Σ_W)_gg' = 0.6^|g−g'|;
   p ∈ {6, 170, 2000}, 6 active predictors; linear f = 2x1−2x2+1.5x3−1.5x4+x5−x6, nonlinear
   f = 2 sin(πx1x2)+4(x3−0.5)²+2x4+exp(x5)+x6x1; correlated random intercept/slope
