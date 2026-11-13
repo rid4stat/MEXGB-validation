@@ -1,0 +1,25 @@
+Package: MEXGB
+Type: Package
+Title: Mixed-Effect Extreme Gradient Boosting for Longitudinal Data
+Version: 0.5.0
+Authors@R: c(person("Ajibade Kunle", "Saheed", role = "aut"),
+             person("Oyebayo Ridwan", "Olaniran", role = c("aut", "cre"),
+                    email = "olaniran.or@kwasu.edu.ng"),
+             person("Mohd Asrul Affendi", "Abdullah", role = "aut"))
+Maintainer: Oyebayo Ridwan Olaniran <olaniran.or@kwasu.edu.ng>
+Description: Extreme gradient boosting (XGBoost) is a regularised, second-order (Newton)
+    tree-boosting method, but like other tree ensembles it treats clustered observations as
+    independent. This package implements Mixed-Effect Extreme Gradient Boosting ('MEXGB'),
+    which embeds subject-specific random effects within the 'xgboost' tree-boosting framework
+    for high-dimensional longitudinal and clustered data with continuous (Gaussian), binary
+    (Bernoulli) or right-censored time-to-event (frailty Cox) outcomes. The fixed effect is fitted by 'xgboost' and the random effects and variance
+    components by an Expectation-Maximization / Best Linear Unbiased Prediction loop, extended to
+    binary and survival outcomes by penalised quasi-likelihood. The implementation mirrors the 'MEGB' package,
+    replacing first-order gradient boosting ('gbm') by extreme gradient boosting ('xgboost').
+License: GPL-2
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: stats, utils, xgboost, MASS, survival, glmnet
+Suggests: testthat (>= 3.0.0), survival
+Config/testthat/edition: 3
+RoxygenNote: 7.3.1

@@ -1,0 +1,87 @@
+# =============================================================================
+# hali/container/mexgb.def -- Apptainer definition for the MEXGB campaign
+# =============================================================================
+# Self-contained R stack: MEXGB and every competitor package, plus the
+# Bioconductor data packages for the multi-study survival sets, so compute nodes
+# need no network.
+#
+#   apptainer build --fakeroot mexgb.sif mexgb.def        (or ./build_image.sh)
+#
+# rocker/r-ver pins the R version AND the CRAN snapshot date, so the image rebuilds
+# identically for the full run weeks after the rehearsal.
+# =============================================================================
+
+Bootstrap: docker
+From: rocker/r-ver:4.4.3
+
+%files
+    MEXGB_0.5.0.tar.gz /tmp/MEXGB_0.5.0.tar.gz
+    MEGB_0.4.tar.gz /tmp/MEGB_0.4.tar.gz
+
+%post
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    # glpk/xml2/gmp: igraph (DiagrammeR <- randomForestSRC); text/graphics stack: ggplot2
+    # devices; curl/ssl: remotes/BiocManager; cmake: gpboost's LightGBM sources on some
+    # snapshots; blas/lapack/gfortran: glmnet, lme4, coxme.
+    apt-get install -y --no-install-recommends \
+        libglpk-dev libxml2-dev libgmp-dev \
+        libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev \
+        libpng-dev libtiff5-dev libjpeg-dev libcairo2-dev \
+        libcurl4-openssl-dev libssl-dev zlib1g-dev cmake \
+        libblas-dev liblapack-dev gfortran
+    rm -rf /var/lib/apt/lists/*
+
+    export R_LIBS_SITE=/usr/local/lib/R/site-library
+    NCPU=$(nproc)
+
+    # CRAN (rocker's pinned snapshot)
+    Rscript -e "install.packages(c( \
+        'xgboost','MEGB','gbm','randomForest','gpboost','mboost','glmmLasso', \
+        'nlme','MASS','lme4','survival','randomForestSRC','glmnet','coxme', \
+        'ggplot2','data.table','jsonlite','future','future.apply','remotes', \
+        'BiocManager','testthat'), Ncpus = $NCPU)"
+
+    # LongituRF (MERF, REEMforest) is archived on CRAN: GitHub mirror, else CRAN archive
+    Rscript -e "for (d in c('latex2exp','mvtnorm','rpart')) if (!requireNamespace(d, quietly=TRUE)) install.packages(d); \
+        ok <- tryCatch({remotes::install_github('cran/LongituRF', upgrade='never'); TRUE}, error=function(e) FALSE); \
+        if (!ok) install.packages('https://cran.r-project.org/src/contrib/Archive/LongituRF/LongituRF_0.9.tar.gz', repos=NULL, type='source')"
+
+    # Bioconductor data packages (multi-study survival data); version matched to R 4.4
+    Rscript -e "BiocManager::install(c('Biobase','breastCancerVDX','breastCancerTRANSBIG', \
+        'breastCancerMAINZ','breastCancerUNT','curatedOvarianData'), update=FALSE, ask=FALSE, Ncpus=$NCPU)"
+
+    R CMD INSTALL /tmp/MEXGB_0.5.0.tar.gz
+    R CMD INSTALL /tmp/MEGB_0.4.tar.gz      # MEGB 0.4 (cross-fitted + converged E-step) over CRAN's 0.2
+    rm -f /tmp/MEXGB_0.5.0.tar.gz /tmp/MEGB_0.4.tar.gz
+
+    # Hard-fail the build if anything required is missing: a package that only fails
+    # at task 3000 of 5000 costs far more than a failed build.
+    Rscript -e "p <- c('MEXGB','xgboost','MEGB','gbm','randomForest','LongituRF','gpboost', \
+        'mboost','glmmLasso','nlme','MASS','lme4','survival','randomForestSRC','glmnet', \
+        'coxme','ggplot2','future.apply','Biobase','breastCancerVDX','breastCancerTRANSBIG', \
+        'breastCancerMAINZ','breastCancerUNT','curatedOvarianData'); \
+        m <- p[!p %in% rownames(installed.packages())]; \
+        if (length(m)) stop('FAILED TO INSTALL: ', paste(m, collapse=', ')); \
+        library(MEXGB); cat('MEXGB', as.character(packageVersion('MEXGB')), \
+            '| xgboost', as.character(packageVersion('xgboost')), ': all packages present\n')"
+
+    echo "baked" > /opt/mexgb_image_kind
+
+%environment
+    export R_LIBS_SITE=/usr/local/lib/R/site-library
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export OPENBLAS_NUM_THREADS=1
+    export OMP_NUM_THREADS=1
+
+%labels
+    Name MEXGB-hali
+    RVersion 4.4.3
+    MEXGB 0.5.0
+    MEGB 0.4
+
+%help
+    R environment for the MEXGB simulation and real-data campaign on Hali.
+      apptainer exec mexgb.sif Rscript -e 'library(MEXGB); sessionInfo()'
